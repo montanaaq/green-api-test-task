@@ -13,6 +13,7 @@ test('GREEN-API HTTP contract', async t => {
   }
   let chatReads = 0
   let rateAttempts = 0
+  const historyStarts: number[] = []
   const server = createServer(async (request, response) => {
     if (request.url?.includes('/timeout/')) return
     response.setHeader('Content-Type', 'application/json')
@@ -65,6 +66,7 @@ test('GREEN-API HTTP contract', async t => {
       response.end('[{"chatId":"123","name":"Иван","type":"user","phoneNumber":79991234567}]')
       return
     }
+    if (request.url?.includes('/getChatHistory/')) historyStarts.push(Date.now())
     let body = ''
     for await (const chunk of request) body += chunk
     response.end(
@@ -115,26 +117,26 @@ test('GREEN-API HTTP contract', async t => {
     ])
   })
 
-  await t.test('Should share and cache repeated chat reads without mixing credentials', async () => {
-    const credentials = { idInstance: '1', apiTokenInstance: 'secret-token' }
-    const before = chatReads
-    const [first, second] = await Promise.all([
-      readGreenApi(credentials, 'getChats'),
-      readGreenApi(credentials, 'getChats')
-    ])
-    assert.deepEqual(first, second)
-    assert.deepEqual(await readGreenApi(credentials, 'getChats'), first)
-    assert.equal(chatReads, before + 1)
+  await t.test(
+    'Should share and cache repeated chat reads without mixing credentials',
+    async () => {
+      const credentials = { idInstance: '1', apiTokenInstance: 'secret-token' }
+      const before = chatReads
+      const [first, second] = await Promise.all([
+        readGreenApi(credentials, 'getChats'),
+        readGreenApi(credentials, 'getChats')
+      ])
+      assert.deepEqual(first, second)
+      assert.deepEqual(await readGreenApi(credentials, 'getChats'), first)
+      assert.equal(chatReads, before + 1)
 
-    await readGreenApi({ ...credentials, apiTokenInstance: 'another-token' }, 'getChats')
-    assert.equal(chatReads, before + 2)
-  })
+      await readGreenApi({ ...credentials, apiTokenInstance: 'another-token' }, 'getChats')
+      assert.equal(chatReads, before + 2)
+    }
+  )
 
   await t.test('Should retry a rate-limited read after Retry-After', async () => {
-    const data = await readGreenApi(
-      { idInstance: '1', apiTokenInstance: 'rate-token' },
-      'getChats'
-    )
+    const data = await readGreenApi({ idInstance: '1', apiTokenInstance: 'rate-token' }, 'getChats')
     assert.ok(Array.isArray(data))
     assert.equal(rateAttempts, 2)
   })
@@ -175,6 +177,19 @@ test('GREEN-API HTTP contract', async t => {
       assert.deepEqual(JSON.parse(data.body), { chatId: '123', count: 50 })
     }
   )
+
+  await t.test('Should pace history reads across different chats on one instance', async () => {
+    const credentials = { idInstance: '1', apiTokenInstance: 'secret-token' }
+    const [first, second] = await Promise.all([
+      readGreenApi<Echo>(credentials, 'getChatHistory', { chatId: '123', count: 50 }),
+      readGreenApi<Echo>(credentials, 'getChatHistory', { chatId: '456', count: 50 })
+    ])
+    assert.deepEqual(JSON.parse(first.body), { chatId: '123', count: 50 })
+    assert.deepEqual(JSON.parse(second.body), { chatId: '456', count: 50 })
+    const [firstStart, secondStart] = historyStarts.slice(-2)
+    assert.ok(firstStart !== undefined && secondStart !== undefined)
+    assert.ok(secondStart - firstStart >= 1_000)
+  })
 
   await t.test('Should delete the notification by receipt ID and confirm its removal', async () => {
     const { data } = await greenApi.delete<Echo & { result: boolean }>('deleteNotification/42')
