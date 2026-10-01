@@ -1,9 +1,9 @@
 import type { Chat, GreenApiCredentials, Message } from '@/types'
 
 import { mergeMessages } from '@/lib'
-import { getChats, getInstanceSettings, receiveNotification } from '@/services'
+import { getChats, receiveNotification } from '@/services'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export const useChats = (credentials: GreenApiCredentials) => {
   const queryClient = useQueryClient()
@@ -14,44 +14,27 @@ export const useChats = (credentials: GreenApiCredentials) => {
     staleTime: 10_000,
     refetchOnWindowFocus: false
   })
-  const settingsQuery = useQuery({
-    queryKey: ['settings', credentials.idInstance],
-    queryFn: ({ signal }) => getInstanceSettings({ data: credentials, signal }),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false
-  })
+
   const receiveQuery = useQuery({
     queryKey: ['receiveNotification', credentials.idInstance],
-    queryFn: async () => {
-      const incoming = await receiveNotification({ data: credentials })
-      if (incoming) {
-        queryClient.setQueryData<Message[]>(['history', incoming.chatId], current =>
-          mergeMessages(current ?? [], [incoming])
-        )
-        void queryClient.invalidateQueries({
-          queryKey: ['history', incoming.chatId],
-          refetchType: 'none'
-        })
-        setAddedChats(current =>
-          current.some(chat => chat.chatId === incoming.chatId)
-            ? current
-            : [...current, { chatId: incoming.chatId, name: incoming.chatId }]
-        )
-      }
-      return incoming
-    },
+    queryFn: () => receiveNotification({ data: credentials }),
+    refetchIntervalInBackground: true,
     refetchInterval: query => (query.state.status === 'error' ? 5_000 : 1_000),
     refetchOnWindowFocus: false,
     retry: false
   })
-  const settings = settingsQuery.data
-  const settingsWarning =
-    settings && (settings.incomingWebhook !== 'yes' || settings.webhookUrl)
-      ? 'Для получения ответов откройте настройки инстанса GREEN-API: включите «Получать уведомления о входящих сообщениях» (incomingWebhook=yes) и очистите Webhook URL. После применения настроек отправьте новое сообщение с телефона получателя.'
-      : undefined
-  const receivingError = [settingsQuery.error?.message, receiveQuery.error?.message]
-    .filter(Boolean)
-    .join('\n')
+  const incoming = receiveQuery.data
+
+  useEffect(() => {
+    if (!incoming) return
+    const historyKey = ['history', incoming.chatId]
+    queryClient.setQueryData<Message[]>(historyKey, current =>
+      mergeMessages(current ?? [], [incoming])
+    )
+    void queryClient.invalidateQueries({ queryKey: historyKey, refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['chats', credentials.idInstance] })
+  }, [incoming, queryClient, credentials.idInstance])
+
   const chats = [
     ...addedChats,
     ...(chatsQuery.data ?? []).filter(chat => !addedChats.some(item => item.chatId === chat.chatId))
@@ -67,8 +50,7 @@ export const useChats = (credentials: GreenApiCredentials) => {
   }
 
   return {
-    settingsWarning,
-    receivingError,
+    receivingError: receiveQuery.error?.message,
     chats,
     chatsError: chatsQuery.error?.message,
     addChat,

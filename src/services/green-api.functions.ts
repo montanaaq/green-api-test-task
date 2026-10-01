@@ -9,24 +9,18 @@ import type {
 } from '@/types'
 
 import {
-  isRecord,
   validateCredentialsInput,
   validatePhoneInput,
   validateChatInput,
   validateMessageInput
 } from '@/lib'
-import { parseIncomingMessage } from '@/lib/green-api/green-api'
-import {
-  createGreenApi,
-  invalidateGreenApiHistory,
-  readGreenApi
-} from '@/lib/green-api/green-api.server'
+import { createApi, invalidateHistory, readApi } from '@/lib/green-api/green-api.server'
 import { createServerFn } from '@tanstack/react-start'
 
 export const getChats = createServerFn({ method: 'POST' })
   .validator(validateCredentialsInput)
   .handler(async ({ data }): Promise<Chat[]> => {
-    const response = await readGreenApi<GreenApiChat[]>(data, 'getChats')
+    const response = await readApi<GreenApiChat[]>(data, 'getChats')
     return response
       .filter(chat => chat.type === 'user')
       .map(chat => ({
@@ -42,19 +36,21 @@ export const checkAccount = createServerFn({ method: 'POST' })
     ...validatePhoneInput(data)
   }))
   .handler(async ({ data }): Promise<Chat> => {
-    const greenApi = createGreenApi(data)
-    const { data: response } = await greenApi.post<GreenApiAccount>(
+    const api = createApi(data)
+    const { data: response } = await api.post<GreenApiAccount>(
       'checkAccount',
       { phoneNumber: Number(data.phone) },
       { timeout: 30_000 }
     )
+    if (!response.exist || !response.chatId)
+      throw new Error('Аккаунт MAX для этого номера не найден')
     return { chatId: response.chatId, name: `+${data.phone}`, phoneNumber: data.phone }
   })
 
 export const getChatHistory = createServerFn({ method: 'POST' })
   .validator((data: unknown) => ({ ...validateCredentialsInput(data), ...validateChatInput(data) }))
   .handler(async ({ data }): Promise<Message[]> => {
-    const response = await readGreenApi<GreenApiHistoryMessage[]>(data, 'getChatHistory', {
+    const response = await readApi<GreenApiHistoryMessage[]>(data, 'getChatHistory', {
       chatId: data.chatId,
       count: 50
     })
@@ -82,12 +78,13 @@ export const sendMessage = createServerFn({ method: 'POST' })
     ...validateMessageInput(data)
   }))
   .handler(async ({ data }): Promise<Message> => {
-    const greenApi = createGreenApi(data)
-    const { data: response } = await greenApi.post<{ idMessage: string }>('sendMessage', {
+    const api = createApi(data)
+    const { data: response } = await api.post<{ idMessage: string }>('sendMessage', {
       chatId: data.chatId,
       message: data.message
     })
-    await invalidateGreenApiHistory(data)
+    if (!response.idMessage) throw new Error('GREEN-API не подтвердил отправку сообщения')
+    await invalidateHistory(data)
     return {
       id: response.idMessage,
       chatId: data.chatId,
@@ -100,31 +97,44 @@ export const sendMessage = createServerFn({ method: 'POST' })
 export const receiveNotification = createServerFn({ method: 'POST' })
   .validator(validateCredentialsInput)
   .handler(async ({ data }): Promise<Message | null> => {
-    const greenApi = createGreenApi(data)
-    const { data: notification } = await greenApi.get<GreenApiNotification | null>(
-      'receiveNotification'
-    )
-    if (notification === null) return null
-    const message = parseIncomingMessage(notification)
+    const api = createApi(data)
+    const { data: notification } = await api.get<GreenApiNotification | null>('receiveNotification')
+    if (!notification) return null
+    const { body } = notification
+    let message: Message | null = null
+    if (body.typeWebhook === 'incomingMessageReceived') {
+      const details = body.messageData
+      if (
+        details?.typeMessage === 'textMessage' ||
+        details?.typeMessage === 'extendedTextMessage'
+      ) {
+        const text =
+          details.typeMessage === 'textMessage'
+            ? details.textMessageData?.textMessage
+            : details.extendedTextMessageData?.text
+        if (typeof text !== 'string' || !body.idMessage || !body.senderData?.chatId) {
+          throw new Error('GREEN-API вернул неверное текстовое уведомление')
+        }
+        message = {
+          id: body.idMessage,
+          chatId: body.senderData.chatId,
+          text,
+          timestamp: body.timestamp,
+          direction: 'incoming'
+        }
+      }
+    }
 
-    await greenApi.delete<{ result: boolean }>(`deleteNotification/${notification.receiptId}`)
-    if (message) await invalidateGreenApiHistory(data)
+    const { data: deleted } = await api.delete<{ result: boolean }>(
+      `deleteNotification/${notification.receiptId}`
+    )
+    if (!deleted.result) throw new Error('Не удалось подтвердить получение уведомления')
+    if (message) await invalidateHistory(data)
     return message
   })
 
 export const getInstanceSettings = createServerFn({ method: 'POST' })
   .validator(validateCredentialsInput)
   .handler(async ({ data }): Promise<GreenApiSettings> => {
-    const settings = await readGreenApi<unknown>(data, 'getSettings')
-    if (
-      !isRecord(settings) ||
-      !['yes', 'no'].includes(String(settings.incomingWebhook)) ||
-      typeof settings.webhookUrl !== 'string'
-    ) {
-      throw new Error('GREEN-API вернул неверный формат настроек инстанса')
-    }
-    return {
-      incomingWebhook: settings.incomingWebhook === 'yes' ? 'yes' : 'no',
-      webhookUrl: settings.webhookUrl
-    }
+    return readApi<GreenApiSettings>(data, 'getSettings')
   })

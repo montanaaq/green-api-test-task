@@ -1,5 +1,6 @@
 import type { GreenApiCredentials } from '@/types'
 
+import { CONNECTION_STORAGE_KEY } from '@/constants'
 import { validateCredentialsInput } from '@/lib'
 import { getInstanceSettings } from '@/services'
 import {
@@ -15,27 +16,10 @@ import {
 } from '@mantine/core'
 import { useMutation, useSessionStorage } from '@siberiacancode/reactuse'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-
-import AppLayout from '../Layout/AppLayout'
-
-const deserializeCredentials = (value: string): GreenApiCredentials | undefined => {
-  try {
-    const parsed: unknown = JSON.parse(value)
-    return validateCredentialsInput(parsed)
-  } catch {
-    return undefined
-  }
-}
+import { useState, type SubmitEvent } from 'react'
 
 const Connection = () => {
-  const storage = useSessionStorage<GreenApiCredentials | undefined>(
-    'green-api-credentials',
-    undefined,
-    {
-      deserializer: deserializeCredentials
-    }
-  )
+  const storage = useSessionStorage<GreenApiCredentials>(CONNECTION_STORAGE_KEY)
   const navigate = useNavigate()
   const [idInstance, setIdInstance] = useState('')
   const [apiTokenInstance, setApiTokenInstance] = useState('')
@@ -44,46 +28,29 @@ const Connection = () => {
     getInstanceSettings({ data: credentials })
   )
 
-  const onConnect = async () => {
+  const onConnect = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault()
     if (connectionMutation.isLoading) return
     setError('')
     try {
       const credentials = validateCredentialsInput({ idInstance, apiTokenInstance })
       await connectionMutation.mutateAsync(credentials)
-      await navigate({ to: '/', replace: true })
       storage.set(credentials)
-      setIdInstance('')
-      setApiTokenInstance('')
+      await navigate({ to: '/', replace: true })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Не удалось подключиться к инстансу')
     }
   }
-
-  const onDisconnect = () => {
-    try {
-      storage.remove()
-      setError('')
-    } catch {
-      setError('Не удалось очистить sessionStorage. Проверьте настройки браузера.')
-    }
-  }
-
-  if (storage.value) return <AppLayout credentials={storage.value} onDisconnect={onDisconnect} />
 
   return (
     <Center component="main" mih="100dvh" p="md">
       <Paper withBorder radius="lg" p="xl" w="100%" maw={440}>
         <Stack>
           <Title order={1} size="h2">
-            Подключение к MAX
+            Подключение
           </Title>
           <Text c="dimmed">Введите данные инстанса из личного кабинета GREEN-API.</Text>
-          <form
-            onSubmit={event => {
-              event.preventDefault()
-              void onConnect()
-            }}
-          >
+          <form onSubmit={onConnect}>
             <Stack>
               <TextInput
                 label="idInstance"
@@ -113,9 +80,6 @@ const Connection = () => {
               )}
             </Stack>
           </form>
-          <Text size="xs" c="dimmed">
-            Данные сохраняются в sessionStorage этой вкладки и удаляются при её закрытии.
-          </Text>
         </Stack>
       </Paper>
     </Center>

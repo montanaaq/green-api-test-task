@@ -1,20 +1,8 @@
 import { useChatContext } from '@/contexts'
 import { checkAccount } from '@/services'
-import {
-  Alert,
-  Badge,
-  Button,
-  Center,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title
-} from '@mantine/core'
+import { Alert, Badge, Button, Center, Group, Paper, Stack, Text, Title } from '@mantine/core'
 import { useMutation } from '@siberiacancode/reactuse'
 import { useNavigate } from '@tanstack/react-router'
-import { MessageSquareIcon } from 'lucide-react'
 import { useState, type SubmitEvent } from 'react'
 
 import PhoneInput from './PhoneInput'
@@ -56,9 +44,6 @@ const NewChat = () => {
       <Center flex={1} p={{ base: 'md', sm: 'xl' }} style={{ overflowY: 'auto' }}>
         <Stack w="100%" maw={440} gap="lg">
           <Stack align="center" ta="center" gap="md">
-            <ThemeIcon size={72} radius="xl" variant="light">
-              <MessageSquareIcon size={36} aria-hidden="true" />
-            </ThemeIcon>
             <Title order={1} size="h2">
               Начните разговор
             </Title>
@@ -66,7 +51,7 @@ const NewChat = () => {
               Введите номер человека в MAX. Мы найдём его чат и откроем переписку.
             </Text>
           </Stack>
-          <form onSubmit={event => onSubmit(event)}>
+          <form onSubmit={onSubmit}>
             <Stack>
               <PhoneInput onChange={setPhone} disabled={chatMutation.isLoading} />
               <Button type="submit" size="md" fullWidth loading={chatMutation.isLoading}>
@@ -79,9 +64,6 @@ const NewChat = () => {
               )}
             </Stack>
           </form>
-          <Text size="xs" c="dimmed" ta="center">
-            Только текстовые сообщения · MAX
-          </Text>
         </Stack>
       </Center>
     </Stack>

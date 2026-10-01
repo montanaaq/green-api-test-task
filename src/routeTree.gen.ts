@@ -9,68 +9,116 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as ConnectedRouteImport } from './routes/_connected'
+import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as ConnectedIndexRouteImport } from './routes/_connected.index'
+import { Route as ConnectedChatChatIdRouteImport } from './routes/_connected.chat.$chatId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ConnectedRoute = ConnectedRouteImport.update({
+  id: '/_connected',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatChatIdRoute = ChatChatIdRouteImport.update({
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectedIndexRoute = ConnectedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ConnectedRoute,
+} as any)
+const ConnectedChatChatIdRoute = ConnectedChatChatIdRouteImport.update({
   id: '/chat/$chatId',
   path: '/chat/$chatId',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => ConnectedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/chat/$chatId': typeof ChatChatIdRoute
+  '/': typeof ConnectedIndexRoute
+  '/connect': typeof ConnectRoute
+  '/chat/$chatId': typeof ConnectedChatChatIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/chat/$chatId': typeof ChatChatIdRoute
+  '/connect': typeof ConnectRoute
+  '/': typeof ConnectedIndexRoute
+  '/chat/$chatId': typeof ConnectedChatChatIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/chat/$chatId': typeof ChatChatIdRoute
+  '/_connected': typeof ConnectedRouteWithChildren
+  '/connect': typeof ConnectRoute
+  '/_connected/': typeof ConnectedIndexRoute
+  '/_connected/chat/$chatId': typeof ConnectedChatChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chat/$chatId'
+  fullPaths: '/' | '/connect' | '/chat/$chatId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chat/$chatId'
-  id: '__root__' | '/' | '/chat/$chatId'
+  to: '/connect' | '/' | '/chat/$chatId'
+  id:
+    | '__root__'
+    | '/_connected'
+    | '/connect'
+    | '/_connected/'
+    | '/_connected/chat/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ChatChatIdRoute: typeof ChatChatIdRoute
+  ConnectedRoute: typeof ConnectedRouteWithChildren
+  ConnectRoute: typeof ConnectRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_connected': {
+      id: '/_connected'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof ConnectedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat/$chatId': {
-      id: '/chat/$chatId'
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_connected/': {
+      id: '/_connected/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof ConnectedIndexRouteImport
+      parentRoute: typeof ConnectedRoute
+    }
+    '/_connected/chat/$chatId': {
+      id: '/_connected/chat/$chatId'
       path: '/chat/$chatId'
       fullPath: '/chat/$chatId'
-      preLoaderRoute: typeof ChatChatIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof ConnectedChatChatIdRouteImport
+      parentRoute: typeof ConnectedRoute
     }
   }
 }
 
+interface ConnectedRouteChildren {
+  ConnectedIndexRoute: typeof ConnectedIndexRoute
+  ConnectedChatChatIdRoute: typeof ConnectedChatChatIdRoute
+}
+
+const ConnectedRouteChildren: ConnectedRouteChildren = {
+  ConnectedIndexRoute: ConnectedIndexRoute,
+  ConnectedChatChatIdRoute: ConnectedChatChatIdRoute,
+}
+
+const ConnectedRouteWithChildren = ConnectedRoute._addFileChildren(
+  ConnectedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ChatChatIdRoute: ChatChatIdRoute,
+  ConnectedRoute: ConnectedRouteWithChildren,
+  ConnectRoute: ConnectRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

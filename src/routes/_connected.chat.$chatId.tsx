@@ -6,4 +6,4 @@ const ChatRoute = () => {
   return <Chat key={chatId} chatId={chatId} />
 }
 
-export const Route = createFileRoute('/chat/$chatId')({ component: ChatRoute })
+export const Route = createFileRoute('/_connected/chat/$chatId')({ component: ChatRoute })

@@ -69,13 +69,8 @@ const AppSidebar = ({ chats, onLoadChats, onDisconnect }: AppSidebarProps) => {
             ))}
           </Stack>
         </ScrollArea>
-        <Tooltip label="Сменить инстанс" position="right">
-          <ActionIcon
-            onClick={onDisconnect}
-            size={44}
-            variant="subtle"
-            aria-label="Сменить инстанс"
-          >
+        <Tooltip label="Выйти" position="right">
+          <ActionIcon onClick={onDisconnect} size={44} variant="subtle" aria-label="Выйти">
             <LogOutIcon size={24} aria-hidden="true" />
           </ActionIcon>
         </Tooltip>

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-import { Connection, NotFound } from '@/components'
+import { NotFound } from '@/components'
 import { MantineProvider } from '@mantine/core'
 import mantineCss from '@mantine/core/styles.css?url'
-import { ClientOnly, HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { ClientOnly, HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 
 const RootDocument = ({ children }: { children: ReactNode }) => (
   <html lang="ru" data-mantine-color-scheme="dark">
@@ -28,7 +28,7 @@ export const Route = createRootRoute({
   }),
   component: () => (
     <ClientOnly>
-      <Connection />
+      <Outlet />
     </ClientOnly>
   ),
   notFoundComponent: NotFound,

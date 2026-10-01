@@ -3,20 +3,18 @@ import type { GreenApiCredentials } from '@/types'
 import { ChatContext } from '@/contexts'
 import { useChats } from '@/hooks'
 import { Alert, Flex, Paper } from '@mantine/core'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Outlet } from '@tanstack/react-router'
-import { useState } from 'react'
 
 import AppSidebar from './AppSidebar'
 
 interface AppLayoutProps {
   credentials: GreenApiCredentials
   onDisconnect: () => void
+  settingsWarning?: string
 }
 
-const AppContent = ({ credentials, onDisconnect }: AppLayoutProps) => {
-  const { chats, chatsError, addChat, loadChats, settingsWarning, receivingError } =
-    useChats(credentials)
+const AppLayout = ({ credentials, onDisconnect, settingsWarning }: AppLayoutProps) => {
+  const { chats, chatsError, addChat, loadChats, receivingError } = useChats(credentials)
 
   return (
     <ChatContext.Provider value={{ chats, addChat, credentials }}>
@@ -44,17 +42,6 @@ const AppContent = ({ credentials, onDisconnect }: AppLayoutProps) => {
         </Paper>
       </Flex>
     </ChatContext.Provider>
-  )
-}
-
-const AppLayout = (props: AppLayoutProps) => {
-  const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  )
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AppContent {...props} />
-    </QueryClientProvider>
   )
 }
 
