@@ -1,0 +1,38 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "tabWidth": 2,
+  "useTabs": false,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "semi": false,
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "printWidth": 100,
+  "sortPackageJson": true,
+  "ignorePatterns": [
+    ".agents/skills/**",
+    ".next/**",
+    "src/generated/**",
+    "pnpm-lock.yaml",
+    "src/routeTree.gen.ts"
+  ],
+  "sortImports": {
+    "newlinesBetween": true,
+    "ignoreCase": true,
+    "internalPattern": ["@/**", "@generated/**"],
+    "customGroups": [
+      {
+        "groupName": "generated",
+        "elementNamePattern": ["@generated/**"]
+      }
+    ],
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "generated",
+      "value-internal",
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
+  }
+}

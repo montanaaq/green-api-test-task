@@ -1,0 +1,9 @@
+.outgoing {
+  align-self: flex-end;
+  background-color: var(--mantine-color-blue-9);
+}
+
+.incoming {
+  align-self: flex-start;
+  background-color: var(--mantine-color-dark-6);
+}

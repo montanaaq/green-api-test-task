@@ -1,0 +1,42 @@
+# AGENTS.md
+
+## Project
+
+This is a small React chat for sending and receiving text messages in MAX through GREEN-API. The operator sets `idInstance` and `apiTokenInstance` in `.env`; the user opens a chat by the recipient's phone number, sends a message, and sees replies in the chat. Keep the interface close to the appearance of [MAX Web](https://web.max.ru/) and limit it to this flow.
+
+Use GREEN-API's CheckAccount to resolve the MAX chat ID, [SendMessage](https://green-api.com/v3/docs/api/sending/SendMessage/) for outgoing messages, and [HTTP API receiving](https://green-api.com/v3/docs/api/receiving/technology-http-api/) for incoming messages. Support text messages only. The assignment permits WhatsApp or Telegram if MAX cannot be implemented.
+
+## Stack and architecture
+
+- React 19, TypeScript, Vite, TanStack Router, Mantine, Lucide icons, and `@siberiacancode/reactuse`.
+- Use TanStack Start in SPA mode for file-based routes and server functions. Render the chat on the client without SSR or Next.js.
+- Keep GREEN-API credentials in server environment variables; never put instance credentials in `VITE_` variables. The app has no access control, so restrict network access before public deployment.
+- Use pnpm and the existing Oxlint and Oxfmt configuration.
+- Keep dependencies minimal. Reuse the installed stack and browser APIs before adding packages.
+
+## Before editing
+
+- Inspect the relevant code and follow established project patterns before creating files or abstractions.
+- For substantial changes, run `pnpm dlx @tanstack/intent@latest list` from the project root. Load a matching local skill before editing.
+- Check local skills or official documentation for unfamiliar React, Vite, TanStack Router, or GREEN-API APIs. Do not guess signatures or response shapes.
+- Explain any architectural trade-off briefly before implementing it.
+
+## Code conventions
+
+- Write strict, maintainable TypeScript. Avoid `any`, unnecessary assertions, and suppressed type, lint, or runtime errors.
+- Prefer small functions, early returns, and existing utilities. Keep routes focused on route declarations; put feature components in `src/components` and place substantial state and effects in hooks beside those components.
+- Keep GREEN-API server functions in `src/services`, server-only request helpers in `src/lib/green-api`, reusable values in `src/constants`, helpers in `src/lib`, and project types in `src/types`. Keep app contexts in `src/contexts`, reusable hooks in `src/hooks`, and feature components in PascalCase folders under `src/components`. Use Mantine components directly; do not create wrappers for UI primitives.
+- Compute display text, initials, dates, and class names before returning JSX rather than chaining formatting expressions inside JSX.
+- Let JSX infer form submit event types. Do not use the deprecated `FormEvent` type.
+- Use Lucide icons for interface actions and `@siberiacancode/reactuse` hooks when they replace manual React logic. Check the hook's skill reference before using it.
+- Use file-based routes in `src/routes` and TanStack Router's `Link` for app navigation. Do not edit `src/routeTree.gen.ts` by hand.
+- Prefer arrow functions for components, `interface` for component props, and default exports from standalone component files. Use named exports for hooks, utilities, constants, schemas, and types.
+- Name components in PascalCase and hooks in camelCase with a `use` prefix. Prefix project event handlers with `on` rather than `handle`.
+- If a mutation object is needed, suffix its variable with `Mutation` and call its methods through that object. Do not add a mutation library solely to follow this naming rule.
+- Use `.const.ts`, `.schema.ts`, and `.types.ts` suffixes when those separate files are useful. Import public code through the corresponding folder barrel using `@/` aliases; keep server-only helpers out of these barrels.
+- Use Mantine components, theme tokens, and layout props. Avoid custom CSS and UI wrappers. Keep controls accessible and action labels stable while requests are pending.
+- Keep instance credentials out of source control and logs. Handle API failures visibly; do not silently discard failed sends or receives.
+
+## Checks
+
+- Run the relevant lint, type, and production build checks after code changes. Fix their root causes instead of suppressing failures.
