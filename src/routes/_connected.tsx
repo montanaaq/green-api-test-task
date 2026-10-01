@@ -10,6 +10,7 @@ const ConnectedRoute = () => {
 }
 
 export const Route = createFileRoute('/_connected')({
+  ssr: false,
   beforeLoad: () => {
     if (typeof window === 'undefined') return { credentials: undefined }
     try {
