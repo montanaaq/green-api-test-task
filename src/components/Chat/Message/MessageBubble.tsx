@@ -22,6 +22,11 @@ const MessageBubble = ({ message }: MessageBubbleProps) => {
       <Text size="sm" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
         {message.text}
       </Text>
+      {message.deliveryError && (
+        <Text size="xs" c="red.3" role="alert" mt={2}>
+          {message.deliveryError}
+        </Text>
+      )}
       <Text
         component="time"
         dateTime={dateTime}

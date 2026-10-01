@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { NotFound } from '@/components'
+import { QueryProvider } from '@/contexts'
 import { MantineProvider } from '@mantine/core'
 import mantineCss from '@mantine/core/styles.css?url'
 import { ClientOnly, HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
@@ -11,7 +12,9 @@ const RootDocument = ({ children }: { children: ReactNode }) => (
       <HeadContent />
     </head>
     <body>
-      <MantineProvider forceColorScheme="dark">{children}</MantineProvider>
+      <QueryProvider>
+        <MantineProvider forceColorScheme="dark">{children}</MantineProvider>
+      </QueryProvider>
       <Scripts />
     </body>
   </html>

@@ -1,9 +1,2 @@
-export type { Chat, ChatContextValue, Message } from './chat.types'
-export type {
-  GreenApiCredentials,
-  GreenApiSettings,
-  GreenApiAccount,
-  GreenApiChat,
-  GreenApiHistoryMessage,
-  GreenApiNotification
-} from './green-api.types'
+export type { Chat, ChatContextValue, ChatNotification, Message } from './chat.types'
+export type { GreenApiCredentials, GreenApiSettings } from './green-api.types'

@@ -3,15 +3,14 @@ import type { Message } from '@/types'
 import { useChatContext } from '@/contexts'
 import { mergeMessages } from '@/lib'
 import { getChatHistory, sendMessage } from '@/services'
-import { useMutation } from '@siberiacancode/reactuse'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 interface ConversationOptions {
   chatId: string
 }
 
 export const useChatConversation = ({ chatId }: ConversationOptions) => {
-  const { credentials } = useChatContext()
+  const { credentials, deliveryErrors } = useChatContext()
   const queryClient = useQueryClient()
   const historyKey = ['history', chatId]
   const historyQuery = useQuery({
@@ -23,15 +22,13 @@ export const useChatConversation = ({ chatId }: ConversationOptions) => {
     staleTime: 10_000,
     refetchOnWindowFocus: false
   })
-  const sendMutation = useMutation(
-    (message: string) => sendMessage({ data: { ...credentials, chatId, message } }),
-    {
-      onSuccess: sent =>
-        queryClient.setQueryData<Message[]>(historyKey, current =>
-          mergeMessages(current ?? [], [sent])
-        )
-    }
-  )
+  const sendMutation = useMutation({
+    mutationFn: (message: string) => sendMessage({ data: { ...credentials, chatId, message } }),
+    onSuccess: sent =>
+      queryClient.setQueryData<Message[]>(historyKey, current =>
+        mergeMessages(current ?? [], [sent])
+      )
+  })
 
   const onSend = (message: string) =>
     sendMutation.mutateAsync(message).then(
@@ -39,7 +36,10 @@ export const useChatConversation = ({ chatId }: ConversationOptions) => {
       () => false
     )
 
-  const messages = historyQuery.data ?? []
+  const messages = (historyQuery.data ?? []).map(message => ({
+    ...message,
+    deliveryError: deliveryErrors[chatId]?.[message.id] ?? message.deliveryError
+  }))
   const error = [historyQuery.error?.message, sendMutation.error?.message]
     .filter(Boolean)
     .join('\n')
@@ -48,7 +48,7 @@ export const useChatConversation = ({ chatId }: ConversationOptions) => {
     messages,
     loading: historyQuery.isPending,
     error,
-    sending: sendMutation.isLoading,
+    sending: sendMutation.isPending,
     onSend
   }
 }

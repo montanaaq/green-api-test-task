@@ -14,26 +14,28 @@ import {
   TextInput,
   Title
 } from '@mantine/core'
-import { useMutation, useSessionStorage } from '@siberiacancode/reactuse'
+import { useSessionStorage } from '@siberiacancode/reactuse'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type SubmitEvent } from 'react'
+import { useState } from 'react'
 
 const Connection = () => {
+  const queryClient = useQueryClient()
   const storage = useSessionStorage<GreenApiCredentials>(CONNECTION_STORAGE_KEY)
   const navigate = useNavigate()
   const [idInstance, setIdInstance] = useState('')
   const [apiTokenInstance, setApiTokenInstance] = useState('')
   const [error, setError] = useState('')
-  const connectionMutation = useMutation((credentials: GreenApiCredentials) =>
-    getInstanceSettings({ data: credentials })
-  )
+  const connectionMutation = useMutation({
+    mutationFn: (credentials: GreenApiCredentials) => getInstanceSettings({ data: credentials })
+  })
 
-  const onConnect = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (connectionMutation.isLoading) return
+  const onConnect = async () => {
+    if (connectionMutation.isPending) return
     setError('')
     try {
       const credentials = validateCredentialsInput({ idInstance, apiTokenInstance })
+      queryClient.clear()
       await connectionMutation.mutateAsync(credentials)
       storage.set(credentials)
       await navigate({ to: '/', replace: true })
@@ -50,7 +52,12 @@ const Connection = () => {
             Подключение
           </Title>
           <Text c="dimmed">Введите данные инстанса из личного кабинета GREEN-API.</Text>
-          <form onSubmit={onConnect}>
+          <form
+            onSubmit={event => {
+              event.preventDefault()
+              void onConnect()
+            }}
+          >
             <Stack>
               <TextInput
                 label="idInstance"
@@ -59,7 +66,7 @@ const Connection = () => {
                 required
                 value={idInstance}
                 onChange={event => setIdInstance(event.currentTarget.value)}
-                disabled={connectionMutation.isLoading}
+                disabled={connectionMutation.isPending}
               />
               <PasswordInput
                 label="apiTokenInstance"
@@ -68,9 +75,9 @@ const Connection = () => {
                 required
                 value={apiTokenInstance}
                 onChange={event => setApiTokenInstance(event.currentTarget.value)}
-                disabled={connectionMutation.isLoading}
+                disabled={connectionMutation.isPending}
               />
-              <Button type="submit" loading={connectionMutation.isLoading}>
+              <Button type="submit" loading={connectionMutation.isPending}>
                 Подключиться
               </Button>
               {error && (

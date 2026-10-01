@@ -1,9 +1,9 @@
 import { useChatContext } from '@/contexts'
 import { checkAccount } from '@/services'
 import { Alert, Badge, Button, Center, Group, Paper, Stack, Text, Title } from '@mantine/core'
-import { useMutation } from '@siberiacancode/reactuse'
+import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState, type SubmitEvent } from 'react'
+import { useState } from 'react'
 
 import PhoneInput from './PhoneInput'
 
@@ -12,13 +12,12 @@ const NewChat = () => {
   const navigate = useNavigate()
   const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
-  const chatMutation = useMutation((phone: string) =>
-    checkAccount({ data: { ...credentials, phone } })
-  )
+  const chatMutation = useMutation({
+    mutationFn: (phone: string) => checkAccount({ data: { ...credentials, phone } })
+  })
 
-  const onSubmit = async (event: SubmitEvent) => {
-    event.preventDefault()
-    if (chatMutation.isLoading) return
+  const onSubmit = async () => {
+    if (chatMutation.isPending) return
     setError('')
     try {
       const chat = await chatMutation.mutateAsync(phone)
@@ -51,10 +50,15 @@ const NewChat = () => {
               Введите номер человека в MAX. Мы найдём его чат и откроем переписку.
             </Text>
           </Stack>
-          <form onSubmit={onSubmit}>
+          <form
+            onSubmit={event => {
+              event.preventDefault()
+              void onSubmit()
+            }}
+          >
             <Stack>
-              <PhoneInput onChange={setPhone} disabled={chatMutation.isLoading} />
-              <Button type="submit" size="md" fullWidth loading={chatMutation.isLoading}>
+              <PhoneInput onChange={setPhone} disabled={chatMutation.isPending} />
+              <Button type="submit" size="md" fullWidth loading={chatMutation.isPending}>
                 Открыть чат
               </Button>
               {error && (

@@ -8,6 +8,13 @@ import { useEffect, useState } from 'react'
 export const useChats = (credentials: GreenApiCredentials) => {
   const queryClient = useQueryClient()
   const [addedChats, setAddedChats] = useState<Chat[]>([])
+  const deliveryErrorsQuery = useQuery<Record<string, Record<string, string>>>({
+    queryKey: ['deliveryErrors'],
+    queryFn: () => ({}),
+    initialData: {},
+    enabled: false,
+    gcTime: Infinity
+  })
   const chatsQuery = useQuery({
     queryKey: ['chats', credentials.idInstance],
     queryFn: ({ signal }) => getChats({ data: credentials, signal }),
@@ -23,17 +30,29 @@ export const useChats = (credentials: GreenApiCredentials) => {
     refetchOnWindowFocus: false,
     retry: false
   })
-  const incoming = receiveQuery.data
+  const notification = receiveQuery.data
 
   useEffect(() => {
-    if (!incoming) return
+    if (!notification) return
+    if (notification.type === 'deliveryError') {
+      const { chatId, idMessage, error } = notification
+      queryClient.setQueryData<Record<string, Record<string, string>>>(
+        ['deliveryErrors'],
+        current => ({
+          ...current,
+          [chatId]: { ...current?.[chatId], [idMessage]: error }
+        })
+      )
+      return
+    }
+    const incoming = notification.message
     const historyKey = ['history', incoming.chatId]
     queryClient.setQueryData<Message[]>(historyKey, current =>
       mergeMessages(current ?? [], [incoming])
     )
     void queryClient.invalidateQueries({ queryKey: historyKey, refetchType: 'none' })
     void queryClient.invalidateQueries({ queryKey: ['chats', credentials.idInstance] })
-  }, [incoming, queryClient, credentials.idInstance])
+  }, [notification, queryClient, credentials.idInstance])
 
   const chats = [
     ...addedChats,
@@ -51,6 +70,7 @@ export const useChats = (credentials: GreenApiCredentials) => {
 
   return {
     receivingError: receiveQuery.error?.message,
+    deliveryErrors: deliveryErrorsQuery.data,
     chats,
     chatsError: chatsQuery.error?.message,
     addChat,

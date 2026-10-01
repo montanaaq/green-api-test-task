@@ -1,6 +1,12 @@
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
+export const isMessageTimestamp = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  Number.isSafeInteger(value) &&
+  value >= 0 &&
+  value <= 8_640_000_000_000
+
 export const normalizePhone = (value: string) => {
   const phone = value.replace(/\D/g, '')
   if (!/^7\d{10}$/.test(phone)) {

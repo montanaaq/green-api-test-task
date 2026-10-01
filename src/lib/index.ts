@@ -1,8 +1,9 @@
 export { getAvatarInitials } from './utils/chat-display'
-export { mergeMessages } from './utils/messages'
+export { getDeliveryError, mergeMessages } from './utils/messages'
 export {
   validateCredentialsInput,
   isRecord,
+  isMessageTimestamp,
   normalizePhone,
   validatePhoneInput,
   validateChatInput,

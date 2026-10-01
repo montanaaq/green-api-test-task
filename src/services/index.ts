@@ -1,8 +1,6 @@
-export {
-  getInstanceSettings,
-  checkAccount,
-  getChatHistory,
-  getChats,
-  receiveNotification,
-  sendMessage
-} from './green-api.functions'
+export { checkAccount } from './check-account.functions'
+export { getChatHistory } from './get-chat-history.functions'
+export { getChats } from './get-chats.functions'
+export { getInstanceSettings } from './get-instance-settings.functions'
+export { receiveNotification } from './receive-notification.functions'
+export { sendMessage } from './send-message.functions'

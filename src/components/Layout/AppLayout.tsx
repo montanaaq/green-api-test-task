@@ -14,10 +14,11 @@ interface AppLayoutProps {
 }
 
 const AppLayout = ({ credentials, onDisconnect, settingsWarning }: AppLayoutProps) => {
-  const { chats, chatsError, addChat, loadChats, receivingError } = useChats(credentials)
+  const { chats, chatsError, addChat, loadChats, receivingError, deliveryErrors } =
+    useChats(credentials)
 
   return (
-    <ChatContext.Provider value={{ chats, addChat, credentials }}>
+    <ChatContext.Provider value={{ chats, addChat, credentials, deliveryErrors }}>
       <Flex h="100dvh" mih={0} style={{ overflow: 'hidden' }}>
         <AppSidebar chats={chats} onLoadChats={loadChats} onDisconnect={onDisconnect} />
         <Paper component="main" radius={0} flex={1} miw={0}>

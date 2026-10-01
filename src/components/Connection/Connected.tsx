@@ -4,7 +4,7 @@ import { CONNECTION_STORAGE_KEY } from '@/constants'
 import { getInstanceSettings } from '@/services'
 import { Alert, Button, Center, Loader, Stack } from '@mantine/core'
 import { useSessionStorage } from '@siberiacancode/reactuse'
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
@@ -14,7 +14,8 @@ interface ConnectedProps {
   credentials: GreenApiCredentials
 }
 
-const VerifiedConnection = ({ credentials }: ConnectedProps) => {
+const Connected = ({ credentials }: ConnectedProps) => {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const storage = useSessionStorage<GreenApiCredentials>(CONNECTION_STORAGE_KEY)
   const [disconnectError, setDisconnectError] = useState('')
@@ -29,6 +30,7 @@ const VerifiedConnection = ({ credentials }: ConnectedProps) => {
     try {
       storage.remove()
       await navigate({ to: '/connect', replace: true })
+      queryClient.clear()
     } catch {
       setDisconnectError('Не удалось очистить sessionStorage. Проверьте настройки браузера.')
     }
@@ -63,17 +65,6 @@ const VerifiedConnection = ({ credentials }: ConnectedProps) => {
       onDisconnect={() => void onDisconnect()}
       settingsWarning={settingsWarning}
     />
-  )
-}
-
-const Connected = (props: ConnectedProps) => {
-  const [queryClient] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  )
-  return (
-    <QueryClientProvider client={queryClient}>
-      <VerifiedConnection {...props} />
-    </QueryClientProvider>
   )
 }
 
