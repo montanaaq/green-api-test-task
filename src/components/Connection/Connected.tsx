@@ -58,7 +58,9 @@ const Connected = ({ credentials }: ConnectedProps) => {
   const settingsWarning =
     settings.incomingWebhook !== 'yes' || settings.webhookUrl
       ? 'Для получения ответов откройте настройки инстанса GREEN-API: включите «Получать уведомления о входящих сообщениях» (incomingWebhook=yes) и очистите Webhook URL. После применения настроек отправьте новое сообщение с телефона получателя.'
-      : undefined
+      : settings.outgoingMessageWebhook !== 'yes'
+        ? 'Чтобы сообщения из приложения MAX, в том числе из «Избранного», появлялись автоматически, включите в настройках инстанса GREEN-API «Получать уведомления о сообщениях, отправленных с телефона». После применения настроек отправьте новое сообщение.'
+        : undefined
   return (
     <AppLayout
       credentials={credentials}

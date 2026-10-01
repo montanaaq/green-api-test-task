@@ -84,7 +84,11 @@ export const receiveApiNotification = async (
 
   const { body } = notification
   let result: ChatNotification | null = null
-  if (body.typeWebhook === 'incomingMessageReceived') {
+  if (
+    body.typeWebhook === 'incomingMessageReceived' ||
+    body.typeWebhook === 'outgoingMessageReceived' ||
+    body.typeWebhook === 'outgoingAPIMessageReceived'
+  ) {
     if (!isRecord(body.messageData) || typeof body.messageData.typeMessage !== 'string') {
       throw new Error('GREEN-API вернул неверные данные сообщения')
     }
@@ -112,7 +116,7 @@ export const receiveApiNotification = async (
           chatId: body.senderData.chatId,
           text,
           timestamp: body.timestamp,
-          direction: 'incoming'
+          direction: body.typeWebhook === 'incomingMessageReceived' ? 'incoming' : 'outgoing'
         }
       }
     }

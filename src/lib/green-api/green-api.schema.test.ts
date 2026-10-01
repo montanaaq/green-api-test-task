@@ -94,11 +94,20 @@ it('Should require a message ID to confirm a send', () => {
 })
 
 it('Should accept only valid receiving settings', () => {
-  expect(parseSettingsResponse({ incomingWebhook: 'yes', webhookUrl: '' })).toEqual({
+  const settings = { incomingWebhook: 'yes', outgoingMessageWebhook: 'yes', webhookUrl: '' }
+  expect(parseSettingsResponse(settings)).toEqual({
     incomingWebhook: 'yes',
+    outgoingMessageWebhook: 'yes',
     webhookUrl: ''
   })
-  expect(() => parseSettingsResponse({ incomingWebhook: true, webhookUrl: '' })).toThrow(
+  expect(parseSettingsResponse({ ...settings, outgoingMessageWebhook: 'no' })).toEqual({
+    ...settings,
+    outgoingMessageWebhook: 'no'
+  })
+  expect(() => parseSettingsResponse({ ...settings, incomingWebhook: true })).toThrow(
+    'неверные настройки'
+  )
+  expect(() => parseSettingsResponse({ ...settings, outgoingMessageWebhook: true })).toThrow(
     'неверные настройки'
   )
 })

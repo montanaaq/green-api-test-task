@@ -80,9 +80,14 @@ export const parseSettingsResponse = (response: unknown): GreenApiSettings => {
   if (
     !isRecord(response) ||
     (response.incomingWebhook !== 'yes' && response.incomingWebhook !== 'no') ||
+    (response.outgoingMessageWebhook !== 'yes' && response.outgoingMessageWebhook !== 'no') ||
     typeof response.webhookUrl !== 'string'
   )
     throw new Error('GREEN-API вернул неверные настройки инстанса')
 
-  return { incomingWebhook: response.incomingWebhook, webhookUrl: response.webhookUrl }
+  return {
+    incomingWebhook: response.incomingWebhook,
+    outgoingMessageWebhook: response.outgoingMessageWebhook,
+    webhookUrl: response.webhookUrl
+  }
 }

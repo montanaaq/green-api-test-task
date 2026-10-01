@@ -76,31 +76,38 @@ const textFormats = [
   { typeMessage: 'textMessage', textMessageData: { textMessage: 'Привет' } },
   { typeMessage: 'extendedTextMessage', extendedTextMessageData: { text: 'Привет' } }
 ]
-textFormats.forEach(messageData => {
-  it(`Should acknowledge ${messageData.typeMessage} before returning it`, async () => {
-    const methods: string[] = []
-    axios.defaults.adapter = async config => {
-      methods.push(`${config.method} ${config.url}`)
-      const data =
-        config.method === 'get'
-          ? { ...textNotification, body: { ...textNotification.body, messageData } }
-          : { result: true }
-      return { data, status: 200, statusText: 'OK', headers: {}, config }
-    }
-    await expect(receiveApiNotification(credentials)).resolves.toEqual({
-      type: 'message',
-      message: {
-        id: 'message-1',
-        chatId: '123',
-        text: 'Привет',
-        timestamp: 1763115112,
-        direction: 'incoming'
+const messageWebhooks = [
+  'incomingMessageReceived',
+  'outgoingMessageReceived',
+  'outgoingAPIMessageReceived'
+]
+messageWebhooks.forEach(typeWebhook => {
+  textFormats.forEach(messageData => {
+    it(`Should acknowledge ${typeWebhook} ${messageData.typeMessage} before returning it`, async () => {
+      const methods: string[] = []
+      axios.defaults.adapter = async config => {
+        methods.push(`${config.method} ${config.url}`)
+        const data =
+          config.method === 'get'
+            ? { ...textNotification, body: { ...textNotification.body, typeWebhook, messageData } }
+            : { result: true }
+        return { data, status: 200, statusText: 'OK', headers: {}, config }
       }
+      await expect(receiveApiNotification(credentials)).resolves.toEqual({
+        type: 'message',
+        message: {
+          id: 'message-1',
+          chatId: '123',
+          text: 'Привет',
+          timestamp: 1763115112,
+          direction: typeWebhook === 'incomingMessageReceived' ? 'incoming' : 'outgoing'
+        }
+      })
+      expect(methods).toEqual([
+        'get receiveNotification/test-token',
+        'delete deleteNotification/test-token/42'
+      ])
     })
-    expect(methods).toEqual([
-      'get receiveNotification/test-token',
-      'delete deleteNotification/test-token/42'
-    ])
   })
 })
 const failedStatuses = ['failed', 'noAccount', 'notInGroup']
@@ -144,6 +151,10 @@ it('Should report an acknowledgement failure instead of returning an unconfirmed
   )
 })
 const malformedNotifications = [
+  {
+    ...textNotification,
+    body: { ...textNotification.body, typeWebhook: 'outgoingMessageReceived', senderData: {} }
+  },
   { ...textNotification, receiptId: '42' },
   { ...textNotification, body: { ...textNotification.body, timestamp: 'invalid' } },
   { ...textNotification, body: { ...textNotification.body, timestamp: 9e15 } },

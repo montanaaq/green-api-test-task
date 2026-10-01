@@ -5,5 +5,6 @@ export interface GreenApiCredentials {
 
 export interface GreenApiSettings {
   incomingWebhook: 'yes' | 'no'
+  outgoingMessageWebhook: 'yes' | 'no'
   webhookUrl: string
 }

@@ -12,7 +12,7 @@ Use Node.js 24 and pnpm 12.8.1, as specified in `package.json`.
 4. Run `pnpm dev` and open `http://localhost:3000`.
 5. Enter `idInstance` and `apiTokenInstance` on the connection screen. The app validates them via `GetSettings`. Use “Выйти” in the sidebar to clear the session and cached data, then connect another instance.
 
-The app checks receiving settings and shows a warning if incoming notifications are disabled or a webhook URL is set. One receiver runs while the app is connected, including on the new-chat screen. Incoming text messages remain in memory across chat navigation. Chat history is reloaded after a page refresh.
+The app checks receiving settings and shows a warning if incoming notifications are disabled or a webhook URL is set. Enable `outgoingMessageWebhook=yes` to also display text sent from the MAX phone, web, or desktop app, including Saved Messages. The app warns when this setting is disabled. Incoming and outgoing text notifications update the chat automatically without duplicates. One receiver runs while the app is connected, including on the new-chat screen. Text messages remain in memory across chat navigation. Chat history is reloaded after a page refresh.
 
 Delivery errors (`failed`, `noAccount`, `notInGroup`) appear below the affected message. The app also restores errors reported in chat history. GREEN-API responses are checked before use; malformed text notifications remain in the queue and produce a visible error. Unsupported media and unrelated notifications are acknowledged without being displayed. Use one open tab per instance: other tabs or apps can consume notifications from the same queue.
 
