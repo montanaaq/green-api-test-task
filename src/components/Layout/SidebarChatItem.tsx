@@ -9,7 +9,7 @@ interface SidebarChatProps {
   active: boolean
 }
 
-const SidebarChat = ({ chat, active }: SidebarChatProps) => {
+const SidebarChatItem = ({ chat, active }: SidebarChatProps) => {
   const initials = getAvatarInitials(chat.name)
   const variant = active ? 'filled' : 'light'
 
@@ -32,4 +32,4 @@ const SidebarChat = ({ chat, active }: SidebarChatProps) => {
   )
 }
 
-export default SidebarChat
+export default SidebarChatItem

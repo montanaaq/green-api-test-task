@@ -1,1 +1,1 @@
-export { CONNECTION_STORAGE_KEY } from './connection.const'
+export const CONNECTION_STORAGE_KEY = 'green-api-credentials'

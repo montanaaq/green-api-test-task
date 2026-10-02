@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import AppLayout from '../Layout/AppLayout'
+import ChatWorkspace from '../Chat/ChatWorkspace'
 
 interface ConnectedProps {
   credentials: GreenApiCredentials
@@ -62,7 +62,7 @@ const Connected = ({ credentials }: ConnectedProps) => {
         ? 'Чтобы сообщения из приложения MAX, в том числе из «Избранного», появлялись автоматически, включите в настройках инстанса GREEN-API «Получать уведомления о сообщениях, отправленных с телефона». После применения настроек отправьте новое сообщение.'
         : undefined
   return (
-    <AppLayout
+    <ChatWorkspace
       credentials={credentials}
       onDisconnect={() => void onDisconnect()}
       settingsWarning={settingsWarning}

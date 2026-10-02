@@ -17,6 +17,7 @@ const Chat = ({ chatId }: ChatProps) => {
   const chat = chats.find(item => item.chatId === chatId)
   const { messages, loading, error, sending, onSend } = useChatConversation({ chatId })
   const state = loading ? 'loading' : messages.length ? 'messages' : 'empty'
+
   const content = {
     loading: <ChatLoading />,
     messages: <ChatMessages messages={messages} />,

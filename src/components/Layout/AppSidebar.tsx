@@ -4,7 +4,7 @@ import { ActionIcon, Divider, Paper, ScrollArea, Stack, Text, Tooltip } from '@m
 import { Link, useRouterState } from '@tanstack/react-router'
 import { LogOutIcon, MessageSquareIcon, PlusIcon } from 'lucide-react'
 
-import SidebarChat from './SidebarChat'
+import SidebarChatItem from './SidebarChatItem'
 
 interface AppSidebarProps {
   chats: Chat[]
@@ -61,7 +61,7 @@ const AppSidebar = ({ chats, onLoadChats, onDisconnect }: AppSidebarProps) => {
             onClick={onLoadChats}
           >
             {chats.map(chat => (
-              <SidebarChat
+              <SidebarChatItem
                 key={chat.chatId}
                 chat={chat}
                 active={pathname === `/chat/${chat.chatId}`}
