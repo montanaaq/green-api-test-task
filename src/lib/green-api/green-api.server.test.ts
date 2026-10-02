@@ -57,7 +57,7 @@ it('Should report an upstream error without exposing the instance token', async 
     })
   }
   const api = createApi({ idInstance: '5', apiTokenInstance: 'secret-token' })
-  await expect(api.get('getChats')).rejects.toThrow('GREEN-API вернул ошибку 401')
+  await expect(api.get('getChats')).rejects.toThrow('Ошибка 401')
   await expect(api.get('getChats')).rejects.not.toThrow('secret-token')
 })
 
@@ -170,7 +170,7 @@ malformedNotifications.forEach(notification => {
       methods.push(config.method ?? '')
       return { data: notification, status: 200, statusText: 'OK', headers: {}, config }
     }
-    await expect(receiveApiNotification(credentials)).rejects.toThrow('GREEN-API вернул неверное')
+    await expect(receiveApiNotification(credentials)).rejects.toThrow('Неверное')
     expect(methods).toEqual(['get'])
   })
 })

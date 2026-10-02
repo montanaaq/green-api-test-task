@@ -19,9 +19,9 @@ it('Should list personal chats and fall back to a phone number when the name is 
     { chatId: '123', name: '79991234567', phoneNumber: '79991234567' },
     { chatId: '456', name: 'Анна', phoneNumber: undefined }
   ])
-  expect(() => parseChatsResponse({})).toThrow('неверный список чатов')
+  expect(() => parseChatsResponse({})).toThrow('Неверный список чатов')
   expect(() => parseChatsResponse([{ type: 'user', chatId: '123' }])).toThrow(
-    'неверные данные чата'
+    'Неверные данные чата'
   )
 })
 
@@ -79,18 +79,18 @@ it('Should load only text history in chronological order and preserve delivery f
       ],
       '123'
     )
-  ).toThrow('неверное текстовое сообщение')
+  ).toThrow('Неверное текстовое сообщение')
 })
 
 it('Should require an existing account and a chat ID', () => {
   expect(parseAccountResponse({ exist: true, chatId: '123' })).toBe('123')
   expect(() => parseAccountResponse({ exist: false })).toThrow('не найден')
-  expect(() => parseAccountResponse({ exist: true })).toThrow('не вернул идентификатор')
+  expect(() => parseAccountResponse({ exist: true })).toThrow('Отсутствует идентификатор')
 })
 
 it('Should require a message ID to confirm a send', () => {
   expect(parseSendResponse({ idMessage: '123' })).toBe('123')
-  expect(() => parseSendResponse({ idMessage: '' })).toThrow('не подтвердил отправку')
+  expect(() => parseSendResponse({ idMessage: '' })).toThrow('Отправка сообщения не подтверждена')
 })
 
 it('Should accept only valid receiving settings', () => {
@@ -105,9 +105,9 @@ it('Should accept only valid receiving settings', () => {
     outgoingMessageWebhook: 'no'
   })
   expect(() => parseSettingsResponse({ ...settings, incomingWebhook: true })).toThrow(
-    'неверные настройки'
+    'Неверные настройки'
   )
   expect(() => parseSettingsResponse({ ...settings, outgoingMessageWebhook: true })).toThrow(
-    'неверные настройки'
+    'Неверные настройки'
   )
 })

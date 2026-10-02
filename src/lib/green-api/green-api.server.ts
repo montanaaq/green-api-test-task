@@ -52,14 +52,12 @@ export const createApi = (credentials: GreenApiCredentials) => {
   api.interceptors.response.use(undefined, (error: unknown) => {
     if (!axios.isAxiosError(error)) throw error
     if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      throw new Error('GREEN-API не ответил вовремя. Проверьте адрес и доступ к сети.')
+      throw new Error('Время ожидания ответа истекло. Проверьте адрес и доступ к сети.')
     }
     if (error.response) {
-      throw new Error(
-        `GREEN-API вернул ошибку ${error.response.status}. Проверьте инстанс и настройки.`
-      )
+      throw new Error(`Ошибка ${error.response.status}. Проверьте инстанс и настройки.`)
     }
-    throw new Error('Не удалось выполнить запрос к GREEN-API. Проверьте адрес и доступ к сети.')
+    throw new Error('Не удалось выполнить запрос. Проверьте адрес и доступ к сети.')
   })
 
   return api
@@ -79,7 +77,7 @@ export const receiveApiNotification = async (
     !isRecord(notification.body) ||
     typeof notification.body.typeWebhook !== 'string'
   ) {
-    throw new Error('GREEN-API вернул неверное уведомление')
+    throw new Error('Неверное уведомление')
   }
 
   const { body } = notification
@@ -90,7 +88,7 @@ export const receiveApiNotification = async (
     body.typeWebhook === 'outgoingAPIMessageReceived'
   ) {
     if (!isRecord(body.messageData) || typeof body.messageData.typeMessage !== 'string') {
-      throw new Error('GREEN-API вернул неверные данные сообщения')
+      throw new Error('Неверные данные сообщения')
     }
     const details = body.messageData
     if (details.typeMessage === 'textMessage' || details.typeMessage === 'extendedTextMessage') {
@@ -107,7 +105,7 @@ export const receiveApiNotification = async (
         !body.senderData.chatId ||
         !isMessageTimestamp(body.timestamp)
       ) {
-        throw new Error('GREEN-API вернул неверное текстовое уведомление')
+        throw new Error('Неверное текстовое уведомление')
       }
       result = {
         type: 'message',
@@ -128,7 +126,7 @@ export const receiveApiNotification = async (
       !body.chatId ||
       typeof body.status !== 'string'
     ) {
-      throw new Error('GREEN-API вернул неверный статус сообщения')
+      throw new Error('Неверный статус сообщения')
     }
     const error = getDeliveryError(body.status)
     if (error)
