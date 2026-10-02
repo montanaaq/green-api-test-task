@@ -5,8 +5,7 @@ import { QueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { createHash } from 'node:crypto'
 
-import { isRecord, isMessageTimestamp } from '../utils/chat-input.ts'
-import { getDeliveryError } from '../utils/messages.ts'
+import { parseAcknowledgementResponse, parseNotificationResponse } from './green-api.schema.ts'
 
 export const apiReadClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 10_000, gcTime: 60_000 } }
@@ -69,76 +68,9 @@ export const receiveApiNotification = async (
   const api = createApi(credentials)
   const { data: notification } = await api.get<unknown>('receiveNotification')
   if (notification === null) return null
-  if (
-    !isRecord(notification) ||
-    typeof notification.receiptId !== 'number' ||
-    !Number.isSafeInteger(notification.receiptId) ||
-    notification.receiptId <= 0 ||
-    !isRecord(notification.body) ||
-    typeof notification.body.typeWebhook !== 'string'
-  ) {
-    throw new Error('Неверное уведомление')
-  }
-
-  const { body } = notification
-  let result: ChatNotification | null = null
-  if (
-    body.typeWebhook === 'incomingMessageReceived' ||
-    body.typeWebhook === 'outgoingMessageReceived' ||
-    body.typeWebhook === 'outgoingAPIMessageReceived'
-  ) {
-    if (!isRecord(body.messageData) || typeof body.messageData.typeMessage !== 'string') {
-      throw new Error('Неверные данные сообщения')
-    }
-    const details = body.messageData
-    if (details.typeMessage === 'textMessage' || details.typeMessage === 'extendedTextMessage') {
-      const text =
-        details.typeMessage === 'textMessage'
-          ? isRecord(details.textMessageData) && details.textMessageData.textMessage
-          : isRecord(details.extendedTextMessageData) && details.extendedTextMessageData.text
-      if (
-        typeof text !== 'string' ||
-        typeof body.idMessage !== 'string' ||
-        !body.idMessage ||
-        !isRecord(body.senderData) ||
-        typeof body.senderData.chatId !== 'string' ||
-        !body.senderData.chatId ||
-        !isMessageTimestamp(body.timestamp)
-      ) {
-        throw new Error('Неверное текстовое уведомление')
-      }
-      result = {
-        type: 'message',
-        message: {
-          id: body.idMessage,
-          chatId: body.senderData.chatId,
-          text,
-          timestamp: body.timestamp,
-          direction: body.typeWebhook === 'incomingMessageReceived' ? 'incoming' : 'outgoing'
-        }
-      }
-    }
-  } else if (body.typeWebhook === 'outgoingMessageStatus') {
-    if (
-      typeof body.idMessage !== 'string' ||
-      !body.idMessage ||
-      typeof body.chatId !== 'string' ||
-      !body.chatId ||
-      typeof body.status !== 'string'
-    ) {
-      throw new Error('Неверный статус сообщения')
-    }
-    const error = getDeliveryError(body.status)
-    if (error)
-      result = { type: 'deliveryError', chatId: body.chatId, idMessage: body.idMessage, error }
-  }
-
-  const { data: deleted } = await api.delete<unknown>(
-    `deleteNotification/${notification.receiptId}`
-  )
-  if (!isRecord(deleted) || deleted.result !== true) {
-    throw new Error('Не удалось подтвердить получение уведомления')
-  }
+  const { receiptId, result } = parseNotificationResponse(notification)
+  const { data: deleted } = await api.delete<unknown>(`deleteNotification/${receiptId}`)
+  parseAcknowledgementResponse(deleted)
   if (result) await invalidateHistory(credentials)
   return result
 }

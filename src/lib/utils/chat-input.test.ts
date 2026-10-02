@@ -25,4 +25,20 @@ it('Should trim a text message and reject an empty send', () => {
     message: 'Привет'
   })
   expect(() => validateMessageInput({ chatId: '123', message: ' ' })).toThrow()
+  expect(() => validateMessageInput({ chatId: '123', message: '😀'.repeat(2001) })).toThrow(
+    'Сообщение должно содержать от 1 до 4000 символов'
+  )
+  expect(validateMessageInput({ chatId: '123', message: '😀'.repeat(2000) }).message).toHaveLength(
+    4000
+  )
+})
+
+it('Should reject invalid credential input without exposing its contents', () => {
+  expect(() => validateCredentialsInput(null)).toThrow('Укажите idInstance и apiTokenInstance')
+  expect(() =>
+    validateCredentialsInput({ idInstance: '123', apiTokenInstance: '../secret' })
+  ).toThrow('Проверьте формат idInstance и apiTokenInstance')
+  expect(() =>
+    validateCredentialsInput({ idInstance: '123', apiTokenInstance: '../secret' })
+  ).not.toThrow('secret')
 })

@@ -1,10 +1,6 @@
-export interface GreenApiCredentials {
-  idInstance: string
-  apiTokenInstance: string
-}
+import type { settingsSchema } from '../lib/green-api/green-api.schema'
+import type { credentialsSchema } from '../lib/utils/chat-input'
+import type { z } from 'zod'
 
-export interface GreenApiSettings {
-  incomingWebhook: 'yes' | 'no'
-  outgoingMessageWebhook: 'yes' | 'no'
-  webhookUrl: string
-}
+export type GreenApiCredentials = z.infer<typeof credentialsSchema>
+export type GreenApiSettings = z.infer<typeof settingsSchema>
